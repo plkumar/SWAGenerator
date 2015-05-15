@@ -1,0 +1,16 @@
+{
+  "name": "SwaggerUI-Generator",
+  "version": "0.0.0",
+  "description": "SwaggerUI-Generator",
+  "main": "app.js",
+  "author": {
+    "name": "Lakshman Peethani",
+    "email": ""
+  },
+  "dependencies": {
+    "jsdom": "^5.4.1",
+    "stringbuilder": "0.0.10",
+    "underscore": "^1.8.3",
+    "underscore.string": "^3.0.3"
+  }
+}
