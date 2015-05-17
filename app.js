@@ -31,7 +31,7 @@ var SwaggerParser = (function () {
         return rslt;
     };
     SwaggerParser.prototype.renderModelTemplate = function () {
-        var _template = fs.readFileSync(this.appDir + '/templates/' + this.swaggerOptions.templateType + '/controllers/controller.ts', 'utf8');
+        var _template = fs.readFileSync(this.appDir + '/templates/' + this.swaggerOptions.templateType + '/controllers/controller.ts_', 'utf8');
         var rslt = $_.template(_template);
         return rslt;
     };
@@ -42,7 +42,7 @@ var SwaggerParser = (function () {
             var objectDef = self.swaggerMetadata.definitions[objectKey];
             var renderModel = self.renderModelTemplate();
             console.log(renderModel({ name: objectKey, schema: objectDef }));
-            console.log("\nObject :" + objectKey + "\n");
+            //console.log("\nObject :" + objectKey + "\n");
             Object.keys(objectDef.properties).forEach(function (propertyKey) {
                 if (objectDef.type === "object") {
                     var propertyObj = objectDef.properties[propertyKey];
@@ -90,7 +90,6 @@ var SwaggerParser = (function () {
                         default:
                     }
                     if (htmlTemplate != undefined) {
-                        console.log(htmlTemplate({ 'propertyObj': propertyObj }));
                     }
                 }
             });

@@ -118,7 +118,7 @@ class SwaggerParser {
     }
     
     renderModelTemplate():any {        
-        var _template = fs.readFileSync(this.appDir+'/templates/'+ this.swaggerOptions.templateType + '/controllers/controller.ts','utf8')
+        var _template = fs.readFileSync(this.appDir+'/templates/'+ this.swaggerOptions.templateType + '/controllers/controller.ts_','utf8')
         var rslt = $_.template(_template);
         return rslt;
     }
@@ -183,7 +183,7 @@ class SwaggerParser {
                     }
 
                     if (htmlTemplate != undefined) {
-                        console.log(htmlTemplate({ 'propertyObj': propertyObj }));
+                        //console.log(htmlTemplate({ 'propertyObj': propertyObj }));
                     }
                 }
             });
@@ -205,7 +205,7 @@ var json = {
             "get": {
                 "tags": ["Contacts"],
                 "operationId": "Contacts_Get",
-                "consumes": [],
+                "consumes": <any[]>[],
                 "produces": ["application/json", "text/json", "application/xml", "text/xml"],
                 "responses": {
                     "200": {
@@ -276,7 +276,7 @@ var json = {
             "delete": {
                 "tags": ["Contacts"],
                 "operationId": "Contacts_DeleteUser",
-                "consumes": [],
+                "consumes": <any[]>[],
                 "produces": ["application/json", "text/json", "application/xml", "text/xml"],
                 "parameters": [{
                     "name": "id",

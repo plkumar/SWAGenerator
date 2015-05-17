@@ -1,0 +1,38 @@
+
+interface <%= name %> {
+	<% _.each(_.keys(schema.properties), function (propertyname) { %>
+	<%- propertyname %> : <%- getType(schema.properties[propertyname]) %>;
+	<% }); %>
+}
+
+<%
+function getType(propertyObj) {
+	switch (true) {
+	    case (propertyObj.type === "integer"
+	        && propertyObj.format === "int32"):
+		        return "number";
+	        break;
+	    case (propertyObj.type === "string"):
+	        return "string";
+	        break;
+	    case (propertyObj.type === "array"):
+	        if(propertyObj.items.$ref !== undefined)
+	        {
+				var typeRefs = propertyObj.items.$ref.split("/");
+				return "" + _.last(typeRefs) + "[]";
+	            //return "any[]";
+	        }else{
+				return getType(propertyObj.items) + "[]";
+			}
+	        break;
+	    case (propertyObj.type === "boolean"):
+	        return "boolean";
+	        break;
+	    case (propertyObj.type === "object"):
+	        return "any";
+	        break;
+	    default:
+			return "any";
+	}
+}
+%>
