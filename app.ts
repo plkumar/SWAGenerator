@@ -1,13 +1,13 @@
-﻿/// <reference path="typings/tsd.d.ts" />
+﻿/// <reference path="typings/jsdom/jsdom.d.ts" />
+/// <reference path="typings/node/node.d.ts" />
+/// <reference path="typings/underscore/underscore.d.ts" />
+/// <reference path="typings/underscore.string/underscore.string.d.ts" />
 
-import _ = require("underscore");
+import $_ = require("underscore");
 import jsdom = require("jsdom");
-
-//import sb = require('StringBuilder')
-////var sb = new StringBuilder({newLine:"\r\n"});
-//
-//sb.append("test");
-
+//import ejs = require('ejs');
+import fs = require('fs');
+import path = require('path');
 
 interface Info {
     version: string;
@@ -27,6 +27,7 @@ interface PropertyDef {
     items: { $ref: string, type: string }
     name: string;
     enum: number[];
+    required?:boolean;
 }
 
 interface Property {
@@ -52,11 +53,21 @@ interface SwaggerResponse {
     definitions: Definitions;
 }
 
+interface TemplateOptions {
+    name:string;
+}
+
+interface SwaggerOptions {
+    templateType:string;
+}
+
 class SwaggerParser {
 
     swaggerMetadata: SwaggerResponse;
+    swaggerOptions : SwaggerOptions;
 
-    constructor(json: any) {
+    constructor(json: any, options:SwaggerOptions) {
+        this.swaggerOptions = options;
         if (json != undefined && typeof json === "string") {
             this.swaggerMetadata = JSON.parse(json);
         } else if (json != undefined && typeof json === "object") {
@@ -66,8 +77,24 @@ class SwaggerParser {
         }
     }
 
+    camelize(str: string): string {
+        return str.replace(/\W+(.)/g, function(match, chr) {
+            return chr.toUpperCase();
+        });
+    }
+    
+    renderTemplate(templateOptions:TemplateOptions):any {
+        var appDir = path.dirname(require.main.filename);
+        var _template = fs.readFileSync(appDir+'/templates/'+ this.swaggerOptions.templateType + '/' + templateOptions.name + '.html','utf8')
+        var rslt = $_.template(_template);
+        return rslt;
+    }
+    
     generateHtmlView(): String {
         var self = this;
+//        $_.templateSettings = {
+//            //interpolate: /\{\{(.+?)\}\}/g
+//        };
 
         Object.keys(this.swaggerMetadata.definitions).forEach(function(objectKey) {
             //console.log(objectDef);
@@ -76,44 +103,51 @@ class SwaggerParser {
             Object.keys(objectDef.properties).forEach(function(propertyKey) {
 
                 if (objectDef.type === "object") {
-                    var properyObject: PropertyDef = objectDef.properties[propertyKey];
-                    properyObject.name = propertyKey;
+                    var propertyObj: PropertyDef = objectDef.properties[propertyKey];
+                    propertyObj.name = propertyKey;
                     var requiredFields = objectDef.required;
-
-                    console.log("Field : " + propertyKey + (requiredFields.indexOf(propertyKey) == -1 ? "" : "[REQUIRED]"));
-
+                    var htmlTemplate: (obj: any) => {};
+                    //set true if property is required
+                    propertyObj.required = (requiredFields.indexOf(propertyKey) == -1 ? false : true);
+                    console.log("REQUIRED : " + propertyObj.required);
                     switch (true) {
-                        case (properyObject.type === "integer"
-                            && properyObject.format === "int32"
-                            && properyObject.enum == undefined):
-                            console.log("\t--> Type: integer ");
+                        case (propertyObj.type === "integer"
+                            && propertyObj.format === "int32"
+                            && propertyObj.enum == undefined):
+                            htmlTemplate = self.renderTemplate({name:'input'});
                             break;
-                        case (properyObject.type === "integer"
-                            && properyObject.format === "int32"
-                            && properyObject.enum != undefined):
-                            console.log("\t--> Type: Enum [" + properyObject.enum + "]");
+                        case (propertyObj.type === "integer"
+                            && propertyObj.format === "int32"
+                            && propertyObj.enum != undefined):
+                            htmlTemplate = self.renderTemplate({name:'select'});
                             break;
-                        case (properyObject.type === "string"
-                            && properyObject.format == undefined):
+                        case (propertyObj.type === "string"
+                            && propertyObj.format == undefined):
                             // pure string type
-                            console.log("\t--> Type: string ");
+                            //htmlTemplate = $_.template("<input type='text' ng-model='{{propertyObj.name}}' >");
+                            htmlTemplate = self.renderTemplate({name:'input'});
                             break;
-                        case (properyObject.type === "string"
-                            && properyObject.format !== undefined
-                            && properyObject.format === "date-time"):
+                        case (propertyObj.type === "string"
+                            && propertyObj.format !== undefined
+                            && propertyObj.format === "date-time"):
                             // date-time type
-                            console.log("\t--> Type: date-time ");
+                            htmlTemplate = self.renderTemplate({name:'date-time'});
                             break;
-                        case (properyObject.type === "barray"):
-                            console.log("\t--> Type: array ");
+                        case (propertyObj.type === "array"):
+                            //console.log("\t--> Type: array ");
                             break;
-                        case (properyObject.type === "boolean"):
-                            console.log("\t--> Type: boolean ");
+                        case (propertyObj.type === "boolean"):
+                            //console.log("\t--> Type: boolean ");
+                            htmlTemplate = self.renderTemplate({name:'checkbox'});
                             break;
-                        case (properyObject.type === "object"):
-                            console.log("\t--> Type: object ");
+                        case (propertyObj.type === "object"):
+                            //console.log("\t--> Type: object ");
                             break;
                         default:
+                    }
+
+                    if (htmlTemplate != undefined) {
+                        console.log(htmlTemplate({ 'propertyObj': propertyObj }));
                     }
                 }
             });
@@ -220,5 +254,5 @@ var json = {
 }
 
 
-var test = new SwaggerParser(json);
+var test = new SwaggerParser(json, {templateType:'angular'});
 test.generateHtmlView();

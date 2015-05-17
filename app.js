@@ -1,6 +1,14 @@
-/// <reference path="typings/tsd.d.ts" />
+/// <reference path="typings/jsdom/jsdom.d.ts" />
+/// <reference path="typings/node/node.d.ts" />
+/// <reference path="typings/underscore/underscore.d.ts" />
+/// <reference path="typings/underscore.string/underscore.string.d.ts" />
+var $_ = require("underscore");
+//import ejs = require('ejs');
+var fs = require('fs');
+var path = require('path');
 var SwaggerParser = (function () {
-    function SwaggerParser(json) {
+    function SwaggerParser(json, options) {
+        this.swaggerOptions = options;
         if (json != undefined && typeof json === "string") {
             this.swaggerMetadata = JSON.parse(json);
         }
@@ -11,50 +19,72 @@ var SwaggerParser = (function () {
             throw "Invalid input format!";
         }
     }
+    SwaggerParser.prototype.camelize = function (str) {
+        return str.replace(/\W+(.)/g, function (match, chr) {
+            return chr.toUpperCase();
+        });
+    };
+    SwaggerParser.prototype.renderTemplate = function (templateOptions) {
+        var appDir = path.dirname(require.main.filename);
+        var _template = fs.readFileSync(appDir + '/templates/' + this.swaggerOptions.templateType + '/' + templateOptions.name + '.html', 'utf8');
+        var rslt = $_.template(_template);
+        return rslt;
+    };
     SwaggerParser.prototype.generateHtmlView = function () {
         var self = this;
+        //        $_.templateSettings = {
+        //            //interpolate: /\{\{(.+?)\}\}/g
+        //        };
         Object.keys(this.swaggerMetadata.definitions).forEach(function (objectKey) {
             //console.log(objectDef);
             var objectDef = self.swaggerMetadata.definitions[objectKey];
             console.log("\nObject :" + objectKey + "\n");
             Object.keys(objectDef.properties).forEach(function (propertyKey) {
                 if (objectDef.type === "object") {
-                    var properyObject = objectDef.properties[propertyKey];
-                    properyObject.name = propertyKey;
+                    var propertyObj = objectDef.properties[propertyKey];
+                    propertyObj.name = propertyKey;
                     var requiredFields = objectDef.required;
-                    console.log("Field : " + propertyKey + (requiredFields.indexOf(propertyKey) == -1 ? "" : "[REQUIRED]"));
+                    var htmlTemplate;
+                    //set true if property is required
+                    propertyObj.required = (requiredFields.indexOf(propertyKey) == -1 ? false : true);
+                    console.log("REQUIRED : " + propertyObj.required);
                     switch (true) {
-                        case (properyObject.type === "integer"
-                            && properyObject.format === "int32"
-                            && properyObject.enum == undefined):
-                            console.log("\t--> Type: integer ");
+                        case (propertyObj.type === "integer"
+                            && propertyObj.format === "int32"
+                            && propertyObj.enum == undefined):
+                            htmlTemplate = self.renderTemplate({ name: 'input' });
                             break;
-                        case (properyObject.type === "integer"
-                            && properyObject.format === "int32"
-                            && properyObject.enum != undefined):
-                            console.log("\t--> Type: Enum [" + properyObject.enum + "]");
+                        case (propertyObj.type === "integer"
+                            && propertyObj.format === "int32"
+                            && propertyObj.enum != undefined):
+                            htmlTemplate = self.renderTemplate({ name: 'select' });
                             break;
-                        case (properyObject.type === "string"
-                            && properyObject.format == undefined):
+                        case (propertyObj.type === "string"
+                            && propertyObj.format == undefined):
                             // pure string type
-                            console.log("\t--> Type: string ");
+                            //htmlTemplate = $_.template("<input type='text' ng-model='{{propertyObj.name}}' >");
+                            htmlTemplate = self.renderTemplate({ name: 'input' });
                             break;
-                        case (properyObject.type === "string"
-                            && properyObject.format !== undefined
-                            && properyObject.format === "date-time"):
+                        case (propertyObj.type === "string"
+                            && propertyObj.format !== undefined
+                            && propertyObj.format === "date-time"):
                             // date-time type
-                            console.log("\t--> Type: date-time ");
+                            htmlTemplate = self.renderTemplate({ name: 'date-time' });
                             break;
-                        case (properyObject.type === "barray"):
-                            console.log("\t--> Type: array ");
+                        case (propertyObj.type === "array"):
+                            //console.log("\t--> Type: array ");
                             break;
-                        case (properyObject.type === "boolean"):
-                            console.log("\t--> Type: boolean ");
+                        case (propertyObj.type === "boolean"):
+                            //console.log("\t--> Type: boolean ");
+                            htmlTemplate = self.renderTemplate({ name: 'checkbox' });
                             break;
-                        case (properyObject.type === "object"):
-                            console.log("\t--> Type: object ");
+                        case (propertyObj.type === "object"):
+                            //console.log("\t--> Type: object ");
                             break;
                         default:
+                    }
+                    if (htmlTemplate != undefined) {
+                        console.log(htmlTemplate({ 'propertyObj': propertyObj }));
                     }
                 }
             });
@@ -159,6 +189,6 @@ var json = {
         }
     }
 };
-var test = new SwaggerParser(json);
+var test = new SwaggerParser(json, { templateType: 'angular' });
 test.generateHtmlView();
 //# sourceMappingURL=app.js.map
