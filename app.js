@@ -9,6 +9,7 @@ var path = require('path');
 var SwaggerParser = (function () {
     function SwaggerParser(json, options) {
         this.swaggerOptions = options;
+        this.appDir = path.dirname(require.main.filename);
         if (json != undefined && typeof json === "string") {
             this.swaggerMetadata = JSON.parse(json);
         }
@@ -24,20 +25,23 @@ var SwaggerParser = (function () {
             return chr.toUpperCase();
         });
     };
-    SwaggerParser.prototype.renderTemplate = function (templateOptions) {
-        var appDir = path.dirname(require.main.filename);
-        var _template = fs.readFileSync(appDir + '/templates/' + this.swaggerOptions.templateType + '/' + templateOptions.name + '.html', 'utf8');
+    SwaggerParser.prototype.renderViewTemplate = function (templateOptions) {
+        var _template = fs.readFileSync(this.appDir + '/templates/' + this.swaggerOptions.templateType + '/views/' + templateOptions.name + '.html', 'utf8');
+        var rslt = $_.template(_template);
+        return rslt;
+    };
+    SwaggerParser.prototype.renderModelTemplate = function () {
+        var _template = fs.readFileSync(this.appDir + '/templates/' + this.swaggerOptions.templateType + '/controllers/controller.ts', 'utf8');
         var rslt = $_.template(_template);
         return rslt;
     };
     SwaggerParser.prototype.generateHtmlView = function () {
         var self = this;
-        //        $_.templateSettings = {
-        //            //interpolate: /\{\{(.+?)\}\}/g
-        //        };
         Object.keys(this.swaggerMetadata.definitions).forEach(function (objectKey) {
             //console.log(objectDef);
             var objectDef = self.swaggerMetadata.definitions[objectKey];
+            var renderModel = self.renderModelTemplate();
+            console.log(renderModel({ name: objectKey, schema: objectDef }));
             console.log("\nObject :" + objectKey + "\n");
             Object.keys(objectDef.properties).forEach(function (propertyKey) {
                 if (objectDef.type === "object") {
@@ -47,36 +51,38 @@ var SwaggerParser = (function () {
                     var htmlTemplate;
                     //set true if property is required
                     propertyObj.required = (requiredFields.indexOf(propertyKey) == -1 ? false : true);
-                    console.log("REQUIRED : " + propertyObj.required);
+                    //console.log("REQUIRED : " + propertyObj.required);
                     switch (true) {
                         case (propertyObj.type === "integer"
                             && propertyObj.format === "int32"
                             && propertyObj.enum == undefined):
-                            htmlTemplate = self.renderTemplate({ name: 'input' });
+                            htmlTemplate = self.renderViewTemplate({ name: 'input' });
                             break;
                         case (propertyObj.type === "integer"
                             && propertyObj.format === "int32"
                             && propertyObj.enum != undefined):
-                            htmlTemplate = self.renderTemplate({ name: 'select' });
+                            htmlTemplate = self.renderViewTemplate({ name: 'select' });
                             break;
                         case (propertyObj.type === "string"
                             && propertyObj.format == undefined):
                             // pure string type
                             //htmlTemplate = $_.template("<input type='text' ng-model='{{propertyObj.name}}' >");
-                            htmlTemplate = self.renderTemplate({ name: 'input' });
+                            htmlTemplate = self.renderViewTemplate({ name: 'input' });
                             break;
                         case (propertyObj.type === "string"
                             && propertyObj.format !== undefined
                             && propertyObj.format === "date-time"):
                             // date-time type
-                            htmlTemplate = self.renderTemplate({ name: 'date-time' });
+                            htmlTemplate = self.renderViewTemplate({ name: 'date-time' });
                             break;
                         case (propertyObj.type === "array"):
                             //console.log("\t--> Type: array ");
+                            if (propertyObj.items.$ref !== undefined) {
+                            }
                             break;
                         case (propertyObj.type === "boolean"):
                             //console.log("\t--> Type: boolean ");
-                            htmlTemplate = self.renderTemplate({ name: 'checkbox' });
+                            htmlTemplate = self.renderViewTemplate({ name: 'checkbox' });
                             break;
                         case (propertyObj.type === "object"):
                             //console.log("\t--> Type: object ");
@@ -120,12 +126,86 @@ var json = {
                     }
                 },
                 "deprecated": false
+            },
+            "post": {
+                "tags": ["Contacts"],
+                "operationId": "Contacts_Add",
+                "consumes": ["application/json", "text/json", "application/xml", "text/xml", "application/x-www-form-urlencoded"],
+                "produces": ["application/json", "text/json", "application/xml", "text/xml"],
+                "parameters": [{
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/User"
+                        }
+                    }],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    }
+                },
+                "deprecated": false
+            }
+        },
+        "/api/Contacts/{id}": {
+            "put": {
+                "tags": ["Contacts"],
+                "operationId": "Contacts_UpdateUSer",
+                "consumes": ["application/json", "text/json", "application/xml", "text/xml", "application/x-www-form-urlencoded"],
+                "produces": ["application/json", "text/json", "application/xml", "text/xml"],
+                "parameters": [{
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "type": "string"
+                    }, {
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/User"
+                        }
+                    }],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    }
+                },
+                "deprecated": false
+            },
+            "delete": {
+                "tags": ["Contacts"],
+                "operationId": "Contacts_DeleteUser",
+                "consumes": [],
+                "produces": ["application/json", "text/json", "application/xml", "text/xml"],
+                "parameters": [{
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "type": "string"
+                    }],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    }
+                },
+                "deprecated": false
             }
         }
     },
     "definitions": {
         "User": {
-            "required": ["Name"],
+            "required": ["Name", "Email"],
             "type": "object",
             "properties": {
                 "Id": {
@@ -133,6 +213,9 @@ var json = {
                     "type": "integer"
                 },
                 "Name": {
+                    "type": "string"
+                },
+                "Email": {
                     "type": "string"
                 },
                 "Age": {
