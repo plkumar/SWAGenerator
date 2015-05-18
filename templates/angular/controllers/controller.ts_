@@ -1,15 +1,22 @@
 
-interface <%= name %> {
-	<% _.each(_.keys(schema.properties), function (propertyname) { %>
-	<%- propertyname %> : <%- getType(schema.properties[propertyname]) %>;
-	<% }); %>
-}
+<%
+	_.each(_.keys(options.json.definitions), function(entityName) {
+	var schema = options.json.definitions[entityName];
+%>
+	interface <%- entityName %> {
+		<% _.each(_.keys(schema.properties), function (propertyname) { %>
+		<%- propertyname %> : <%- getType(schema.properties[propertyname]) %>;
+		<% }); %>
+	}
+<%
+	});
+%>
 
 <%
 function getType(propertyObj) {
 	switch (true) {
 	    case (propertyObj.type === "integer"
-	        && propertyObj.format === "int32"):
+	        && (propertyObj.format === "int32" || propertyObj.format === "int64")):
 		        return "number";
 	        break;
 	    case (propertyObj.type === "string"):
@@ -36,17 +43,10 @@ function getType(propertyObj) {
 	}
 }
 %>
- 
-<%- "class " + schema.name %>Controller {
+
+<%- "class " + classNamePrefix %>Controller {
 	
 	constructor(private $scope: ng.IScope ) {
 	
 	}
-	
-	<%  if(paths != null ) {
-			_.each(_.keys(paths), function (key) {
-				var servicePath = paths[key];
-			});
-		}
-	%>
 }

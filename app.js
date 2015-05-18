@@ -3,7 +3,6 @@
 /// <reference path="typings/underscore/underscore.d.ts" />
 /// <reference path="typings/underscore.string/underscore.string.d.ts" />
 var $_ = require("underscore");
-//import ejs = require('ejs');
 var fs = require('fs');
 var path = require('path');
 var SwaggerParser = (function () {
@@ -54,21 +53,16 @@ var SwaggerParser = (function () {
     SwaggerParser.prototype.scaffoldAngularCode = function () {
         var self = this;
         self.renderServiceTemplate();
+        var renderModel = self.renderModelTemplate();
         var generatedTypeScript = "";
+        generatedTypeScript = generatedTypeScript + "\r\n" + renderModel({ options: self.swaggerOptions, application: self.swaggerOptions.application, classNamePrefix: self.swaggerOptions.classNamePrefix });
         Object.keys(this.swaggerMetadata.definitions).forEach(function (objectKey) {
             var generatedHtml = "";
             var objectDef = self.swaggerMetadata.definitions[objectKey];
             objectDef.name = objectKey;
-            var renderModel = self.renderModelTemplate();
-            generatedTypeScript = generatedTypeScript + "\r\n" + renderModel({ application: self.swaggerOptions.application,
-                name: objectKey,
-                schema: objectDef,
-                paths: self.swaggerOptions.json.paths });
-            //console.log(renderModel({name:objectKey, schema:objectDef}));
             generatedHtml = generatedHtml + "\r\n" +
                 self.renderViewTemplate()({ application: self.swaggerOptions.application,
                     name: objectKey, schema: objectDef });
-            //console.log(self.renderViewTemplate()({name:objectKey, schema:objectDef}))
             fs.writeFileSync("generated/generated." + objectDef.name + ".html", generatedHtml);
         });
         fs.writeFileSync("generated/generated.controllers.ts", generatedTypeScript);
@@ -76,7 +70,7 @@ var SwaggerParser = (function () {
     };
     return SwaggerParser;
 })();
-var swjson = fs.readFileSync("sample.json").toString();
+var swjson = JSON.parse(fs.readFileSync("swagger.json").toString());
 var test = new SwaggerParser({ templateType: 'angular', application: 'myapp', classNamePrefix: "Contacts", json: swjson });
 test.scaffoldAngularCode();
 //# sourceMappingURL=app.js.map

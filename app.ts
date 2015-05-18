@@ -4,8 +4,6 @@
 /// <reference path="typings/underscore.string/underscore.string.d.ts" />
 
 import $_ = require("underscore");
-import jsdom = require("jsdom");
-//import ejs = require('ejs');
 import fs = require('fs');
 import path = require('path');
 
@@ -150,8 +148,9 @@ class SwaggerParser {
         var self = this;
         
         self.renderServiceTemplate();
-        
+        var renderModel = self.renderModelTemplate();
         var generatedTypeScript:string ="";
+        generatedTypeScript = generatedTypeScript + "\r\n" + renderModel({ options:self.swaggerOptions, application: self.swaggerOptions.application, classNamePrefix:self.swaggerOptions.classNamePrefix });
         
         Object.keys(this.swaggerMetadata.definitions).forEach(function(objectKey) {
             
@@ -159,18 +158,10 @@ class SwaggerParser {
             
             var objectDef = self.swaggerMetadata.definitions[objectKey];
             objectDef.name = objectKey;
-            var renderModel = self.renderModelTemplate();
-
-            generatedTypeScript = generatedTypeScript + "\r\n" + renderModel({ application:self.swaggerOptions.application,
-                name:objectKey,
-                schema:objectDef,
-                paths:self.swaggerOptions.json.paths});
-            //console.log(renderModel({name:objectKey, schema:objectDef}));
-
+            
             generatedHtml = generatedHtml + "\r\n" +
             self.renderViewTemplate()({application:self.swaggerOptions.application,
                 name:objectKey, schema:objectDef}); 
-            //console.log(self.renderViewTemplate()({name:objectKey, schema:objectDef}))
             
             fs.writeFileSync("generated/generated." + objectDef.name + ".html", generatedHtml);
 
@@ -181,7 +172,7 @@ class SwaggerParser {
     }
 }
 
-var swjson = fs.readFileSync("sample.json").toString();
+var swjson = JSON.parse(fs.readFileSync("swagger.json").toString());
 
 var test = new SwaggerParser({templateType:'angular', application:'myapp', classNamePrefix:"Contacts", json: swjson });
 
