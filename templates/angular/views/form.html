@@ -1,0 +1,58 @@
+
+<div ng-controller="ExampleController">
+  <form novalidate class="simple-form">
+<% 
+  _.each(_.keys(schema.properties), function (propertyname) {
+    schema.properties[propertyname].name = propertyname;
+    getTypeControl(schema.properties[propertyname], schema);    
+  });
+%>
+    <input type="button" ng-click="reset()" value="Reset" />
+    <input type="submit" ng-click="update(user)" value="Save" />
+  </form>
+</div>
+
+<%
+function getTypeControl(propertyObj, schema) {
+    if(schema.required)
+        propertyObj.required = (schema.required.indexOf(propertyObj.name) == -1 ? false : true);
+    
+    var strNgRequired = propertyObj.required == true ? "ng-required=true" : "";
+    
+	switch (true) {
+	    case (propertyObj.type === "integer"
+	        && propertyObj.format === "int32"): %>
+    <input type="number" name="<%- propertyObj.name %>" data-ng-model="<%- propertyObj.name %>" <%- strNgRequired%>></input>
+	        <% break;
+	    case (propertyObj.type === "string"
+            && propertyObj.format == undefined ): %>
+    <input type="text" name="<%- propertyObj.name %>" data-ng-model="<%- propertyObj.name %>" <%- strNgRequired%>></input>
+	        <% break;
+       case (propertyObj.type === "string"
+            && propertyObj.format !== undefined
+            && propertyObj.format === "date-time"): %>
+    <input type="date" class="form-control" <%- strNgRequired%> datepicker-popup data-ng-model="<%- propertyObj.name %>" is-open="opened" min-date="minDate" max-date="'2015-06-22'" datepicker-options="dateOptions" date-disabled="disabled(date, mode)" close-text="Close" />
+            <% break;
+	    case (propertyObj.type === "array"):
+	        if(propertyObj.items.$ref !== undefined)
+	        {
+				var typeRef = propertyObj.items.$ref.split("/");
+				//return "" + _.last(typeRef) + "[]";
+                %>
+    <!-- Add the code to handle object hierarchy here for property <%- propertyObj.name %> -->
+                <%
+	        }else{
+				getTypeControl(propertyObj.items, schema);
+			}
+	        break;
+	    case (propertyObj.type === "boolean"): %>
+    <input type="checkbox" data-ng-model="<%= propertyObj.name %>" <%- strNgRequired%> ></input>
+	        <% break;
+	    case (propertyObj.type === "object"):
+	        return "any";
+	        break;
+	    default:
+			return "any";
+	}
+}
+%>

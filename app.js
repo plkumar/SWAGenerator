@@ -25,6 +25,11 @@ var SwaggerParser = (function () {
             return chr.toUpperCase();
         });
     };
+    SwaggerParser.prototype.renderViewTemplate2 = function () {
+        var _template = fs.readFileSync(this.appDir + '/templates/' + this.swaggerOptions.templateType + '/views/form.html', 'utf8');
+        var rslt = $_.template(_template);
+        return rslt;
+    };
     SwaggerParser.prototype.renderViewTemplate = function (templateOptions) {
         var _template = fs.readFileSync(this.appDir + '/templates/' + this.swaggerOptions.templateType + '/views/' + templateOptions.name + '.html', 'utf8');
         var rslt = $_.template(_template);
@@ -43,6 +48,7 @@ var SwaggerParser = (function () {
             var renderModel = self.renderModelTemplate();
             console.log(renderModel({ name: objectKey, schema: objectDef }));
             //console.log("\nObject :" + objectKey + "\n");
+            console.log(self.renderViewTemplate2()({ name: objectKey, schema: objectDef }));
             Object.keys(objectDef.properties).forEach(function (propertyKey) {
                 if (objectDef.type === "object") {
                     var propertyObj = objectDef.properties[propertyKey];
@@ -56,24 +62,24 @@ var SwaggerParser = (function () {
                         case (propertyObj.type === "integer"
                             && propertyObj.format === "int32"
                             && propertyObj.enum == undefined):
-                            htmlTemplate = self.renderViewTemplate({ name: 'input' });
+                            //htmlTemplate = self.renderViewTemplate({name:'input'});
                             break;
                         case (propertyObj.type === "integer"
                             && propertyObj.format === "int32"
                             && propertyObj.enum != undefined):
-                            htmlTemplate = self.renderViewTemplate({ name: 'select' });
+                            //htmlTemplate = self.renderViewTemplate({name:'select'});
                             break;
                         case (propertyObj.type === "string"
                             && propertyObj.format == undefined):
                             // pure string type
                             //htmlTemplate = $_.template("<input type='text' ng-model='{{propertyObj.name}}' >");
-                            htmlTemplate = self.renderViewTemplate({ name: 'input' });
+                            //htmlTemplate = self.renderViewTemplate({name:'input'});
                             break;
                         case (propertyObj.type === "string"
                             && propertyObj.format !== undefined
                             && propertyObj.format === "date-time"):
                             // date-time type
-                            htmlTemplate = self.renderViewTemplate({ name: 'date-time' });
+                            //htmlTemplate = self.renderViewTemplate({name:'date-time'});
                             break;
                         case (propertyObj.type === "array"):
                             //console.log("\t--> Type: array ");
@@ -82,7 +88,7 @@ var SwaggerParser = (function () {
                             break;
                         case (propertyObj.type === "boolean"):
                             //console.log("\t--> Type: boolean ");
-                            htmlTemplate = self.renderViewTemplate({ name: 'checkbox' });
+                            //htmlTemplate = self.renderViewTemplate({name:'checkbox'});
                             break;
                         case (propertyObj.type === "object"):
                             //console.log("\t--> Type: object ");
