@@ -36,3 +36,13 @@ function getType(propertyObj) {
 	}
 }
 %>
+ 
+<%- "class " + schema.name %>Controller {
+	constructor(private $scope: ng.IScope ) {
+	
+	}
+	
+	function 
+}
+
+

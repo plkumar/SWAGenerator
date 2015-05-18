@@ -7,14 +7,14 @@ var $_ = require("underscore");
 var fs = require('fs');
 var path = require('path');
 var SwaggerParser = (function () {
-    function SwaggerParser(json, options) {
+    function SwaggerParser(options) {
         this.swaggerOptions = options;
         this.appDir = path.dirname(require.main.filename);
-        if (json != undefined && typeof json === "string") {
-            this.swaggerMetadata = JSON.parse(json);
+        if (options.json != undefined && typeof options.json === "string") {
+            this.swaggerMetadata = JSON.parse(options.json);
         }
-        else if (json != undefined && typeof json === "object") {
-            this.swaggerMetadata = json;
+        else if (options.json != undefined && typeof options.json === "object") {
+            this.swaggerMetadata = options.json;
         }
         else {
             throw "Invalid input format!";
@@ -25,13 +25,8 @@ var SwaggerParser = (function () {
             return chr.toUpperCase();
         });
     };
-    SwaggerParser.prototype.renderViewTemplate2 = function () {
+    SwaggerParser.prototype.renderViewTemplate = function () {
         var _template = fs.readFileSync(this.appDir + '/templates/' + this.swaggerOptions.templateType + '/views/form.html', 'utf8');
-        var rslt = $_.template(_template);
-        return rslt;
-    };
-    SwaggerParser.prototype.renderViewTemplate = function (templateOptions) {
-        var _template = fs.readFileSync(this.appDir + '/templates/' + this.swaggerOptions.templateType + '/views/' + templateOptions.name + '.html', 'utf8');
         var rslt = $_.template(_template);
         return rslt;
     };
@@ -40,71 +35,26 @@ var SwaggerParser = (function () {
         var rslt = $_.template(_template);
         return rslt;
     };
-    SwaggerParser.prototype.generateHtmlView = function () {
+    SwaggerParser.prototype.scaffoldAngularCode = function () {
         var self = this;
+        var generatedTypeScript = "";
         Object.keys(this.swaggerMetadata.definitions).forEach(function (objectKey) {
-            //console.log(objectDef);
+            var generatedHtml = "";
             var objectDef = self.swaggerMetadata.definitions[objectKey];
+            objectDef.name = objectKey;
             var renderModel = self.renderModelTemplate();
-            console.log(renderModel({ name: objectKey, schema: objectDef }));
-            //console.log("\nObject :" + objectKey + "\n");
-            console.log(self.renderViewTemplate2()({ name: objectKey, schema: objectDef }));
-            Object.keys(objectDef.properties).forEach(function (propertyKey) {
-                if (objectDef.type === "object") {
-                    var propertyObj = objectDef.properties[propertyKey];
-                    propertyObj.name = propertyKey;
-                    var requiredFields = objectDef.required;
-                    var htmlTemplate;
-                    //set true if property is required
-                    propertyObj.required = (requiredFields.indexOf(propertyKey) == -1 ? false : true);
-                    //console.log("REQUIRED : " + propertyObj.required);
-                    switch (true) {
-                        case (propertyObj.type === "integer"
-                            && propertyObj.format === "int32"
-                            && propertyObj.enum == undefined):
-                            //htmlTemplate = self.renderViewTemplate({name:'input'});
-                            break;
-                        case (propertyObj.type === "integer"
-                            && propertyObj.format === "int32"
-                            && propertyObj.enum != undefined):
-                            //htmlTemplate = self.renderViewTemplate({name:'select'});
-                            break;
-                        case (propertyObj.type === "string"
-                            && propertyObj.format == undefined):
-                            // pure string type
-                            //htmlTemplate = $_.template("<input type='text' ng-model='{{propertyObj.name}}' >");
-                            //htmlTemplate = self.renderViewTemplate({name:'input'});
-                            break;
-                        case (propertyObj.type === "string"
-                            && propertyObj.format !== undefined
-                            && propertyObj.format === "date-time"):
-                            // date-time type
-                            //htmlTemplate = self.renderViewTemplate({name:'date-time'});
-                            break;
-                        case (propertyObj.type === "array"):
-                            //console.log("\t--> Type: array ");
-                            if (propertyObj.items.$ref !== undefined) {
-                            }
-                            break;
-                        case (propertyObj.type === "boolean"):
-                            //console.log("\t--> Type: boolean ");
-                            //htmlTemplate = self.renderViewTemplate({name:'checkbox'});
-                            break;
-                        case (propertyObj.type === "object"):
-                            //console.log("\t--> Type: object ");
-                            break;
-                        default:
-                    }
-                    if (htmlTemplate != undefined) {
-                    }
-                }
-            });
+            generatedTypeScript = generatedTypeScript + "\r\n" + renderModel({ application: self.swaggerOptions.application, name: objectKey, schema: objectDef });
+            //console.log(renderModel({name:objectKey, schema:objectDef}));
+            generatedHtml = generatedHtml + "\r\n" + self.renderViewTemplate()({ application: self.swaggerOptions.application, name: objectKey, schema: objectDef });
+            //console.log(self.renderViewTemplate()({name:objectKey, schema:objectDef}))
+            fs.writeFileSync("generated/generated." + objectDef.name + ".html", generatedHtml);
         });
+        fs.writeFileSync("generated/generated.controllers.ts", generatedTypeScript);
         return "";
     };
     return SwaggerParser;
 })();
-var json = {
+var swjson = {
     "swagger": "2.0",
     "info": {
         "version": "v1",
@@ -277,6 +227,6 @@ var json = {
         }
     }
 };
-var test = new SwaggerParser(json, { templateType: 'angular' });
-test.generateHtmlView();
+var test = new SwaggerParser({ templateType: 'angular', application: 'myapp', json: swjson });
+console.log(test.scaffoldAngularCode());
 //# sourceMappingURL=app.js.map

@@ -56,6 +56,7 @@ interface Property {
 }
 
 interface SwaggerEntity {
+    name?:string;
     required: string[];
     type: string;
     properties: Property;
@@ -84,7 +85,9 @@ interface TemplateOptions {
 }
 
 interface SwaggerOptions {
-    templateType:string;
+    application : string;
+    templateType : string;
+    json : any;
 }
 
 class SwaggerParser {
@@ -93,13 +96,13 @@ class SwaggerParser {
     swaggerOptions : SwaggerOptions;
     appDir : string;
 
-    constructor(json: any, options:SwaggerOptions) {
+    constructor( options:SwaggerOptions ) {
         this.swaggerOptions = options;
         this.appDir = path.dirname(require.main.filename);
-        if (json != undefined && typeof json === "string") {
-            this.swaggerMetadata = JSON.parse(json);
-        } else if (json != undefined && typeof json === "object") {
-            this.swaggerMetadata = json;
+        if (options.json != undefined && typeof options.json === "string") {
+            this.swaggerMetadata = JSON.parse(options.json);
+        } else if (options.json != undefined && typeof options.json === "object") {
+            this.swaggerMetadata = options.json;
         } else {
             throw "Invalid input format!";
         }
@@ -111,94 +114,47 @@ class SwaggerParser {
         });
     }
 
-    renderViewTemplate2():any {
-        var _template = fs.readFileSync(this.appDir+'/templates/'+ this.swaggerOptions.templateType + '/views/form.html','utf8')
+    renderViewTemplate():any {
+        var _template = fs.readFileSync(this.appDir+'/templates/' + this.swaggerOptions.templateType + '/views/form.html','utf8')
         var rslt = $_.template(_template);
         return rslt;
     }
-        
-    renderViewTemplate(templateOptions:TemplateOptions):any {
-        var _template = fs.readFileSync(this.appDir+'/templates/'+ this.swaggerOptions.templateType + '/views/' + templateOptions.name + '.html','utf8')
-        var rslt = $_.template(_template);
-        return rslt;
-    }
-    
+  
     renderModelTemplate():any {        
-        var _template = fs.readFileSync(this.appDir+'/templates/'+ this.swaggerOptions.templateType + '/controllers/controller.ts_','utf8')
+        var _template = fs.readFileSync(this.appDir+'/templates/' + this.swaggerOptions.templateType + '/controllers/controller.ts_','utf8')
         var rslt = $_.template(_template);
         return rslt;
     }
     
-    generateHtmlView(): String {
+    scaffoldAngularCode(): String {
         var self = this;
-
+        
+        var generatedTypeScript:string ="";
+        
         Object.keys(this.swaggerMetadata.definitions).forEach(function(objectKey) {
-            //console.log(objectDef);
+            
+            var generatedHtml:string="";
+            
             var objectDef = self.swaggerMetadata.definitions[objectKey];
+            objectDef.name = objectKey;
             var renderModel = self.renderModelTemplate();
-            console.log(renderModel({name:objectKey, schema:objectDef}));
-            //console.log("\nObject :" + objectKey + "\n");
-            console.log(self.renderViewTemplate2()({name:objectKey, schema:objectDef}))
-            Object.keys(objectDef.properties).forEach(function(propertyKey) {
 
-                if (objectDef.type === "object") {
-                    var propertyObj: PropertyDef = objectDef.properties[propertyKey];
-                    propertyObj.name = propertyKey;
-                    var requiredFields = objectDef.required;
-                    var htmlTemplate: (obj: any) => {};
-                    //set true if property is required
-                    propertyObj.required = (requiredFields.indexOf(propertyKey) == -1 ? false : true);
-                    //console.log("REQUIRED : " + propertyObj.required);
-                    switch (true) {
-                        case (propertyObj.type === "integer"
-                            && propertyObj.format === "int32"
-                            && propertyObj.enum == undefined):
-                            //htmlTemplate = self.renderViewTemplate({name:'input'});
-                            break;
-                        case (propertyObj.type === "integer"
-                            && propertyObj.format === "int32"
-                            && propertyObj.enum != undefined):
-                            //htmlTemplate = self.renderViewTemplate({name:'select'});
-                            break;
-                        case (propertyObj.type === "string"
-                            && propertyObj.format == undefined):
-                            // pure string type
-                            //htmlTemplate = self.renderViewTemplate({name:'input'});
-                            break;
-                        case (propertyObj.type === "string"
-                            && propertyObj.format !== undefined
-                            && propertyObj.format === "date-time"):
-                            // date-time type
-                            //htmlTemplate = self.renderViewTemplate({name:'date-time'});
-                            break;
-                        case (propertyObj.type === "array"):
-                            //console.log("\t--> Type: array ");
-                            if(propertyObj.items.$ref !== undefined)
-                            {
-                                
-                            } 
-                            break;
-                        case (propertyObj.type === "boolean"):
-                            //console.log("\t--> Type: boolean ");
-                            //htmlTemplate = self.renderViewTemplate({name:'checkbox'});
-                            break;
-                        case (propertyObj.type === "object"):
-                            //console.log("\t--> Type: object ");
-                            break;
-                        default:
-                    }
+            generatedTypeScript = generatedTypeScript + "\r\n" + renderModel({application:self.swaggerOptions.application, name:objectKey, schema:objectDef});
+            //console.log(renderModel({name:objectKey, schema:objectDef}));
 
-                    if (htmlTemplate != undefined) {
-                        //console.log(htmlTemplate({ 'propertyObj': propertyObj }));
-                    }
-                }
-            });
+            generatedHtml = generatedHtml + "\r\n" + self.renderViewTemplate()({application:self.swaggerOptions.application, name:objectKey, schema:objectDef}); 
+            //console.log(self.renderViewTemplate()({name:objectKey, schema:objectDef}))
+            
+            fs.writeFileSync("generated/generated." + objectDef.name + ".html", generatedHtml);
+
         });
+
+        fs.writeFileSync("generated/generated.controllers.ts", generatedTypeScript);               
         return "";
     }
 }
 
-var json = {
+var swjson = {
     "swagger": "2.0",
     "info": {
         "version": "v1",
@@ -372,5 +328,5 @@ var json = {
     }
 }
 
-var test = new SwaggerParser(json, {templateType:'angular'});
-test.generateHtmlView();
+var test = new SwaggerParser({templateType:'angular', application:'myapp', json: swjson });
+console.log(test.scaffoldAngularCode());

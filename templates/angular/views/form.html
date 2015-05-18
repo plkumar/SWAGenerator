@@ -1,16 +1,29 @@
+<!DOCTYPE html>
+<html ng-app="<%- application %>">
 
-<div ng-controller="ExampleController">
-  <form novalidate class="simple-form">
-<% 
-  _.each(_.keys(schema.properties), function (propertyname) {
-    schema.properties[propertyname].name = propertyname;
-    getTypeControl(schema.properties[propertyname], schema);    
-  });
-%>
-    <input type="button" ng-click="reset()" value="Reset" />
-    <input type="submit" ng-click="update(user)" value="Save" />
-  </form>
-</div>
+  <head>
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css" rel="stylesheet">
+    <script data-require="angular.js@1.2.18" data-semver="1.2.18" src="http://code.angularjs.org/1.2.18/angular.min.js"></script>
+    <script data-require="angular-ui-bootstrap@0.11.0" data-semver="0.11.0" src="http://angular-ui.github.io/bootstrap/ui-bootstrap-tpls-0.11.0.js"></script>
+    <link rel="stylesheet" href="style.css" />
+    <script src="generated.controllers.js"></script>
+  </head>
+
+  <body >
+    <div ng-controller="ExampleController">
+      <form novalidate class="simple-form">
+    <% 
+      _.each(_.keys(schema.properties), function (propertyname) {
+        schema.properties[propertyname].name = propertyname;
+        getTypeControl(schema.properties[propertyname], schema);    
+      });
+    %>
+        <input type="button" ng-click="reset()" value="Reset" />
+        <input type="submit" ng-click="update(user)" value="Save" />
+      </form>
+    </div>
+</body>
+</html>
 
 <%
 function getTypeControl(propertyObj, schema) {
@@ -42,6 +55,7 @@ function getTypeControl(propertyObj, schema) {
     <!-- Add the code to handle object hierarchy here for property <%- propertyObj.name %> -->
                 <%
 	        }else{
+                propertyObj.items.name = propertyObj.name;
 				getTypeControl(propertyObj.items, schema);
 			}
 	        break;
