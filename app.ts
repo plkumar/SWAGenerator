@@ -88,6 +88,7 @@ interface SwaggerOptions {
     application : string;
     templateType : string;
     json : any;
+    classNamePrefix : string;
 }
 
 class SwaggerParser {
@@ -120,6 +121,13 @@ class SwaggerParser {
         return rslt;
     }
   
+    renderServiceTemplate () : any {
+        var CodeGen = require('swagger-js-codegen').CodeGen;        
+        var angularjsSourceCode = CodeGen.getAngularCode({ className: this.swaggerOptions.classNamePrefix + 'Service', swagger: this.swaggerMetadata });
+        fs.writeFileSync("generated/generated." + this.swaggerOptions.classNamePrefix + 'Service' + ".js", angularjsSourceCode);
+        return angularjsSourceCode;
+    }
+  
     renderModelTemplate():any {        
         var _template = fs.readFileSync(this.appDir+'/templates/' + this.swaggerOptions.templateType + '/controllers/controller.ts_','utf8')
         var rslt = $_.template(_template);
@@ -139,10 +147,15 @@ class SwaggerParser {
             objectDef.name = objectKey;
             var renderModel = self.renderModelTemplate();
 
-            generatedTypeScript = generatedTypeScript + "\r\n" + renderModel({application:self.swaggerOptions.application, name:objectKey, schema:objectDef});
+            generatedTypeScript = generatedTypeScript + "\r\n" + renderModel({ application:self.swaggerOptions.application,
+                name:objectKey,
+                schema:objectDef,
+                paths:self.swaggerOptions.json.paths});
             //console.log(renderModel({name:objectKey, schema:objectDef}));
 
-            generatedHtml = generatedHtml + "\r\n" + self.renderViewTemplate()({application:self.swaggerOptions.application, name:objectKey, schema:objectDef}); 
+            generatedHtml = generatedHtml + "\r\n" +
+            self.renderViewTemplate()({application:self.swaggerOptions.application,
+                name:objectKey, schema:objectDef}); 
             //console.log(self.renderViewTemplate()({name:objectKey, schema:objectDef}))
             
             fs.writeFileSync("generated/generated." + objectDef.name + ".html", generatedHtml);
@@ -328,5 +341,8 @@ var swjson = {
     }
 }
 
-var test = new SwaggerParser({templateType:'angular', application:'myapp', json: swjson });
-console.log(test.scaffoldAngularCode());
+var test = new SwaggerParser({templateType:'angular', application:'myapp', classNamePrefix:"Contacts", json: swjson });
+
+console.log(test.renderServiceTemplate());
+
+test.scaffoldAngularCode();

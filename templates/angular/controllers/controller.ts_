@@ -38,11 +38,15 @@ function getType(propertyObj) {
 %>
  
 <%- "class " + schema.name %>Controller {
+	
 	constructor(private $scope: ng.IScope ) {
 	
 	}
 	
-	function 
+	<%  if(paths != null ) {
+			_.each(_.keys(paths), function (key) {
+				var servicePath = paths[key];
+			});
+		}
+	%>
 }
-
-

@@ -10,6 +10,7 @@
   "dependencies": {
     "jsdom": "^5.4.1",
     "stringbuilder": "0.0.10",
+    "swagger-js-codegen": "^1.1.2",
     "underscore": "^1.8.3",
     "underscore.string": "^3.0.3"
   }
