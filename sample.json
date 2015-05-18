@@ -1,0 +1,173 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "version": "v1",
+        "title": "AGS.Hyper.Web"
+    },
+    "host": "localhost:52997",
+    "schemes": ["http"],
+    "paths": {
+        "/api/Contacts": {
+            "get": {
+                "tags": ["Contacts"],
+                "operationId": "Contacts_Get",
+                "consumes": [],
+                "produces": ["application/json", "text/json", "application/xml", "text/xml"],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/User"
+                            }
+                        }
+                    }
+                },
+                "deprecated": false
+            },
+            "post": {
+                "tags": ["Contacts"],
+                "operationId": "Contacts_Add",
+                "consumes": ["application/json", "text/json", "application/xml", "text/xml", "application/x-www-form-urlencoded"],
+                "produces": ["application/json", "text/json", "application/xml", "text/xml"],
+                "parameters": [{
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/User"
+                        }
+                    }],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    }
+                },
+                "deprecated": false
+            }
+        },
+        "/api/Contacts/{id}": {
+            "put": {
+                "tags": ["Contacts"],
+                "operationId": "Contacts_UpdateUSer",
+                "consumes": ["application/json", "text/json", "application/xml", "text/xml", "application/x-www-form-urlencoded"],
+                "produces": ["application/json", "text/json", "application/xml", "text/xml"],
+                "parameters": [{
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "type": "string"
+                    }, {
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/User"
+                        }
+                    }],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    }
+                },
+                "deprecated": false
+            },
+            "delete": {
+                "tags": ["Contacts"],
+                "operationId": "Contacts_DeleteUser",
+                "consumes": [],
+                "produces": ["application/json", "text/json", "application/xml", "text/xml"],
+                "parameters": [{
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "type": "string"
+                    }],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    }
+                },
+                "deprecated": false
+            }
+        }
+    },
+    "definitions": {
+        "User": {
+            "required": ["Name", "Email"],
+            "type": "object",
+            "properties": {
+                "Id": {
+                    "format": "int32",
+                    "type": "integer"
+                },
+                "Name": {
+                    "type": "string"
+                },
+                "Email": {
+                    "type": "string"
+                },
+                "Age": {
+                    "format": "int32",
+                    "type": "integer"
+                },
+                "DateOfBirth": {
+                    "format": "date-time",
+                    "type": "string"
+                },
+                "Addresses": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Address"
+                    }
+                },
+                "Intrests": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "IsAlive": {
+                    "type": "boolean"
+                },
+                "MaritalStatus": {
+                    "format": "int32",
+                    "enum": [0, 1, 2, 3],
+                    "type": "integer"
+                }
+            }
+        },
+        "Address": {
+            "required": ["AddressLine1", "City", "ZipCode"],
+            "type": "object",
+            "properties": {
+                "Id": {
+                    "format": "int32",
+                    "type": "integer"
+                },
+                "AddressLine1": {
+                    "type": "string"
+                },
+                "AddressLine2": {
+                    "type": "string"
+                },
+                "City": {
+                    "type": "string"
+                },
+                "ZipCode": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}
